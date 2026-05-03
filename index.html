@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>マイティ・インスタ v3.0 (トップ入力版)</title>
+    <title>マイティ・インスタ v3.1 (マルチデバイス対応)</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,20 +37,55 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 10px;
+            padding: 20px;
             overflow-x: hidden;
         }
 
+        /* --- Layout --- */
         .container {
+            display: flex;
+            flex-direction: row; /* Default PC: Horizontal */
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 1000px) {
+            body { padding: 10px; }
+            .container {
+                flex-direction: column; /* Mobile: Vertical */
+                align-items: center;
+                gap: 15px;
+            }
+            .sidebar, .preview-area {
+                width: 100% !important;
+                max-width: 600px;
+            }
+            .sidebar { order: 2; }
+            .preview-area { order: 1; }
+            .gen-top-mobile { display: block !important; }
+            .gen-sidebar-pc { display: none !important; }
+        }
+
+        .sidebar {
+            width: 360px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            max-width: 600px;
-            width: 100%;
-            align-items: center;
+            flex-shrink: 0;
         }
 
-        /* Top, Middle, Bottom sections */
+        .preview-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        /* --- Components --- */
         .section-box {
             background: white;
             padding: 20px;
@@ -65,19 +100,19 @@
 
         .input-group { display: flex; flex-direction: column; gap: 4px; }
         label { font-size: 11px; font-weight: bold; color: #444; }
-        input, textarea, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; -webkit-appearance: none; }
+        input, textarea, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; -webkit-appearance: none; }
         button { padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
         .btn-generate { background-color: var(--accent-gold); color: white; }
-        .btn-download { background-color: #333; color: white; font-size: 16px; }
+        .btn-download { background-color: #333; color: white; font-size: 16px; width: 100%; }
         .btn-copy { background-color: #eee; color: #333; font-size: 14px; }
 
+        /* --- Insta Post --- */
         #post-scaler {
             width: 100%;
             display: flex;
             justify-content: center;
             overflow: visible;
         }
-
         #insta-post {
             width: 600px;
             height: 750px;
@@ -89,17 +124,11 @@
             flex-direction: column;
             position: relative;
             transform-origin: top center;
+            flex-shrink: 0;
         }
-
-        .post-header {
-            display: flex; justify-content: center; align-items: center; height: 120px; margin-bottom: 20px;
-        }
-        .category-title {
-            font-weight: 900; padding-bottom: 6px; border-bottom: 8px solid var(--accent-gold); display: inline-block; line-height: 1.2; text-align: center;
-        }
-        .mascot-area {
-            position: absolute; right: 10px; bottom: 40px; width: 180px; height: 180px; display: flex; justify-content: center; align-items: center; z-index: 10;
-        }
+        .post-header { display: flex; justify-content: center; align-items: center; height: 120px; margin-bottom: 20px; }
+        .category-title { font-weight: 900; padding-bottom: 6px; border-bottom: 8px solid var(--accent-gold); display: inline-block; line-height: 1.2; text-align: center; }
+        .mascot-area { position: absolute; right: 10px; bottom: 40px; width: 180px; height: 180px; display: flex; justify-content: center; align-items: center; z-index: 10; }
         .mascot-area img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .content-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-bottom: 80px; }
         .main-quote { font-weight: 900; text-align: center; width: 100%; line-height: 1.4; white-space: pre-wrap; word-break: break-all; z-index: 5; }
@@ -110,78 +139,101 @@
             position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; font-weight: bold; color: var(--accent-gold);
         }
         .placeholder-box { width: 100%; height: 100%; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #888; }
+        
+        .gen-top-mobile { display: none; margin-bottom: 15px; } /* Only for mobile */
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- 1. Top Section: Generator -->
-        <div class="section-box">
-            <h3 style="margin:0; color:var(--accent-gold); font-size:16px;">Mighty Insta v3.0</h3>
-            <div class="input-group">
-                <label>Gemini API Key</label>
-                <input type="password" id="apiKey" placeholder="キーを入力">
+        <!-- Sidebar (PC: Left, Mobile: Bottom) -->
+        <div class="sidebar">
+            <div class="section-box gen-sidebar-pc">
+                <h3 style="margin:0; color:var(--accent-gold); font-size:16px;">Mighty Insta v3.1</h3>
+                <div class="input-group">
+                    <label>Gemini API Key</label>
+                    <input type="password" class="apiKey" placeholder="キーを入力">
+                </div>
+                <div class="input-group">
+                    <label>人名・名前</label>
+                    <input type="text" class="targetInput" placeholder="例: 蜷川幸雄">
+                    <button class="generateBtn btn-generate">✨ 新しい名言を生成</button>
+                </div>
             </div>
-            <div class="input-group">
-                <label>人名・クリエイター名</label>
-                <input type="text" id="targetInput" placeholder="例: 蜷川幸雄">
-                <button id="generateBtn" class="btn-generate">✨ 新しい名言を生成</button>
+
+            <div class="section-box">
+                <div style="display:flex; gap:10px;">
+                    <div class="input-group" style="flex:1;">
+                        <label>タイトルサイズ: <span id="catSizeVal">60</span>px</label>
+                        <input type="range" id="catSizeSlider" min="20" max="100" value="60">
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>名言サイズ: <span id="quoteSizeVal">60</span>px</label>
+                        <input type="range" id="quoteSizeSlider" min="30" max="150" value="60">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>名言の修正・改行</label>
+                    <textarea id="quoteInput" rows="2" placeholder="直接入力・修正"></textarea>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="input-group">
+                    <label>キャプション案</label>
+                    <textarea id="bodyInput" rows="6" style="font-size:14px;"></textarea>
+                    <button id="copyBtn" class="btn-copy">📋 キャプションをコピー</button>
+                </div>
+                <button id="downloadBtn" class="btn-download">📥 画像を保存する</button>
             </div>
         </div>
 
-        <!-- 2. Middle Section: Preview & Quick Adjust -->
-        <div id="post-scaler">
-            <div id="insta-post">
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div style="font-size: 30px; margin-bottom: 10px;">🎨</div>
-                    生成中...
+        <!-- Preview Area -->
+        <div class="preview-area">
+            <!-- Mobile Top Input -->
+            <div class="section-box gen-top-mobile">
+                <h3 style="margin:0; color:var(--accent-gold); font-size:16px; margin-bottom:10px;">Mighty Insta v3.1</h3>
+                <div class="input-group">
+                    <label>API Key</label>
+                    <input type="password" class="apiKey" placeholder="キーを入力">
                 </div>
-                <div class="post-header"><div class="category-title" id="displayCategory">タイトルの言葉</div></div>
-                <div class="content-area"><div class="main-quote" id="displayQuote">名言</div></div>
-                <div class="mascot-area" id="mascotPreview"><div class="placeholder-box">Mighty</div></div>
-                <div class="post-footer"><div class="school-name">舞台スタッフの学校</div></div>
+                <div class="input-group" style="margin-top:10px;">
+                    <label>名前</label>
+                    <input type="text" class="targetInput" placeholder="蜷川幸雄など">
+                    <button class="generateBtn btn-generate" style="margin-top:5px;">✨ 名言生成</button>
+                </div>
             </div>
-        </div>
 
-        <div class="section-box">
-            <div style="display:flex; gap:10px;">
-                <div class="input-group" style="flex:1;">
-                    <label>タイトルサイズ: <span id="catSizeVal">60</span>px</label>
-                    <input type="range" id="catSizeSlider" min="20" max="100" value="60">
+            <div id="post-scaler">
+                <div id="insta-post">
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div style="font-size: 30px; margin-bottom: 10px;">🎨</div>
+                        生成中...
+                    </div>
+                    <div class="post-header"><div class="category-title" id="displayCategory">タイトルの言葉</div></div>
+                    <div class="content-area"><div class="main-quote" id="displayQuote">名言</div></div>
+                    <div class="mascot-area" id="mascotPreview"><div class="placeholder-box">Mighty</div></div>
+                    <div class="post-footer"><div class="school-name">舞台スタッフの学校</div></div>
                 </div>
-                <div class="input-group" style="flex:1;">
-                    <label>名言サイズ: <span id="quoteSizeVal">60</span>px</label>
-                    <input type="range" id="quoteSizeSlider" min="30" max="150" value="60">
-                </div>
             </div>
-            <div class="input-group">
-                <label>名言の修正・改行</label>
-                <textarea id="quoteInput" rows="2" placeholder="ここに名言を直接入力"></textarea>
-            </div>
-        </div>
-
-        <!-- 3. Bottom Section: Output -->
-        <div class="section-box">
-            <div class="input-group">
-                <label>投稿用キャプション案</label>
-                <textarea id="bodyInput" rows="6" style="font-size:14px;"></textarea>
-                <button id="copyBtn" class="btn-copy">📋 キャプションをコピー</button>
-            </div>
-            <button id="downloadBtn" class="btn-download">📥 画像を保存する</button>
         </div>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://cdn.jsdelivr.net/npm/@google/generative-ai/+esm";
 
+        // Handle duplicate elements for PC/Mobile
+        const getEl = (cls) => document.querySelector(cls);
+        const getAllEls = (cls) => document.querySelectorAll(cls);
+
         const els = {
-            apiKey: document.getElementById('apiKey'),
-            target: document.getElementById('targetInput'),
-            genBtn: document.getElementById('generateBtn'),
+            apiKeys: getAllEls('.apiKey'),
+            targets: getAllEls('.targetInput'),
+            genBtns: getAllEls('.generateBtn'),
             dlBtn: document.getElementById('downloadBtn'),
             copyBtn: document.getElementById('copyBtn'),
             loading: document.getElementById('loadingOverlay'),
-            catIn: { value: "" }, // Hidden/Dynamic
+            catIn: { value: "" },
             quoteIn: document.getElementById('quoteInput'),
             bodyIn: document.getElementById('bodyInput'),
             catDisp: document.getElementById('displayCategory'),
@@ -205,9 +257,8 @@
         const rescalePreview = () => {
             const container = document.getElementById('post-scaler');
             const post = document.getElementById('insta-post');
-            const availableWidth = window.innerWidth - 40; // Horizontal padding
+            const availableWidth = container.offsetWidth;
             const originalWidth = 600;
-            
             if (availableWidth < originalWidth) {
                 const scale = availableWidth / originalWidth;
                 post.style.transform = `scale(${scale})`;
@@ -222,20 +273,25 @@
         window.addEventListener('load', rescalePreview);
         [els.catSlider, els.quoteSlider, els.quoteIn].forEach(el => el.addEventListener('input', syncUI));
 
-        els.apiKey.value = localStorage.getItem('mighty_key') || '';
+        // Sync inputs between mobile and PC hidden versions
+        els.apiKeys.forEach(input => {
+            input.value = localStorage.getItem('mighty_key') || '';
+            input.addEventListener('input', (e) => els.apiKeys.forEach(other => other.value = e.target.value));
+        });
+        els.targets.forEach(input => {
+            input.addEventListener('input', (e) => els.targets.forEach(other => other.value = e.target.value));
+        });
 
-        els.genBtn.addEventListener('click', async () => {
-            const key = els.apiKey.value;
-            const target = els.target.value;
+        els.genBtns.forEach(btn => btn.addEventListener('click', async () => {
+            const key = els.apiKeys[0].value;
+            const target = els.targets[0].value;
             if (!key || !target) return alert('API Keyと名前を入力してください');
             localStorage.setItem('mighty_key', key);
             els.loading.style.display = 'flex';
             try {
                 const genAI = new GoogleGenerativeAI(key);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const prompt = `あなたは「マイティ」という名の20歳の若手スタッフです。${target}の名言を一つ選び、以下の条件でインスタ投稿案を作成してください。
-                【条件】1.名言(quote)は句読点（。、）禁止。2.冒頭は「おはようございます！マイティだよ。」から始める。3.ハッシュタグ10個程度。
-                JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n解説文\n\nハッシュタグ"}`;
+                const prompt = `あなたは「マイティ」という名の20歳の若手スタッフ。${target}の名言を選んでJSON作成。1.句読点禁止。2.「おはようございます！マイティだよ。」から始める。JSON: {"category":"${target}の言葉","quote":"名言","body":"本文"}`;
                 const result = await model.generateContent(prompt);
                 const json = JSON.parse((await result.response.text()).match(/\{[\s\S]*\}/)[0]);
                 els.catIn.value = json.category;
@@ -244,7 +300,7 @@
                 syncUI();
                 rescalePreview();
             } catch (err) { alert('エラー: ' + err.message); } finally { els.loading.style.display = 'none'; }
-        });
+        }));
 
         els.copyBtn.addEventListener('click', () => { els.bodyIn.select(); document.execCommand('copy'); alert('コピー完了！'); });
 
