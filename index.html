@@ -291,7 +291,16 @@
             try {
                 const genAI = new GoogleGenerativeAI(key);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const prompt = `あなたは「マイティ」という名の20歳の若手スタッフ。${target}の名言を選んでJSON作成。1.句読点禁止。2.「おはようございます！マイティだよ。」から始める。JSON: {"category":"${target}の言葉","quote":"名言","body":"本文"}`;
+                const prompt = `あなたは「マイティ」という名の20歳の若手スタッフです。${target}の名言を一つ選び、以下の条件でインスタ投稿案を作成してください。
+
+                【絶対条件】
+                1. 名言(quote): インパクトのある短い言葉。句読点（。、）は一切入れない。
+                2. 本文(body): 冒頭は必ず「おはようございます！マイティだよ。」から始めてください。
+                3. キャラクター設定: あなたは20歳で、まだ現場に入ったばかりの新米です。偉そうな「先輩」ではなく、高校生や同世代の仲間に対して「僕もまだ勉強中だけど、一緒に頑張ろう」という謙虚で優しく、穏やかな口調で語りかけてください。
+                4. 本文の内容: その名言を読んで、自分（新人のマイティ）がどう感じたか、どう励まされたかを140文字程度で等身大に伝えてください。
+                5. ハッシュタグ: #舞台スタッフの学校 #名言 #演劇 #舞台 を含み、関連ハッシュタグを計10個程度。
+                
+                JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n新人の僕が感じたことなどの解説文\n\nハッシュタグ"}`;
                 const result = await model.generateContent(prompt);
                 const json = JSON.parse((await result.response.text()).match(/\{[\s\S]*\}/)[0]);
                 els.catIn.value = json.category;
