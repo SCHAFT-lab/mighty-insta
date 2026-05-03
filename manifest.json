@@ -1,0 +1,16 @@
+{
+  "name": "Mighty Insta",
+  "short_name": "Mighty",
+  "description": "Instagram Post Generator for Mighty",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fcfbf4",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "assets/mighty.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

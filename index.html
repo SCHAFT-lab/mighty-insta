@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マイティ・インスタ v2.6 (レイアウト刷新)</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="assets/mighty.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+    </script>
+    <style>
+        :root {
+            --bg-color: #fcfbf4;
+            --accent-gold: #d4af37;
+            --text-dark: #333333;
+            --font-gothic: 'Noto Sans JP', sans-serif;
+            --font-mincho: 'Noto Serif JP', serif;
+        }
+
+        body {
+            margin: 0;
+            font-family: var(--font-gothic);
+            background-color: #eef2f6;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 25px;
+            max-width: 1400px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-size: 11px; font-weight: bold; color: #444; }
+        input, textarea, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-generate { background-color: var(--accent-gold); color: white; }
+        .btn-download { background-color: #333; color: white; font-size: 16px; }
+        .btn-copy { background-color: #eee; color: #333; font-size: 13px; }
+
+        .preview-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #insta-post {
+            width: 600px;
+            height: 750px;
+            background-color: var(--bg-color);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 60px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Title Centered */
+        .post-header {
+            display: flex;
+            justify-content: center; /* Centered */
+            align-items: center;
+            height: 120px;
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-weight: 900;
+            padding-bottom: 6px;
+            border-bottom: 8px solid var(--accent-gold);
+            display: inline-block;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        /* Mascot in bottom right */
+        .mascot-area {
+            position: absolute;
+            right: 10px;
+            bottom: 40px;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .mascot-area img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 80px; /* Space for mascot/footer */
+        }
+
+        .main-quote {
+            font-weight: 900;
+            text-align: center;
+            width: 100%;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+            z-index: 5;
+        }
+
+        .post-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            width: 100%;
+        }
+
+        .school-name { font-size: 25px; font-weight: 900; opacity: 0.6; }
+
+        .caption-box {
+            width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .caption-text {
+            font-family: var(--font-mincho);
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #555;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .loading-overlay {
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.9);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 100; font-weight: bold; color: var(--accent-gold);
+        }
+
+        .placeholder-box { width: 100%; height: 100%; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="controls">
+            <h3 style="margin:0; color:var(--accent-gold);">Mighty Insta v2.6</h3>
+            
+            <div class="input-group">
+                <label>Gemini API Key</label>
+                <input type="password" id="apiKey" placeholder="キーを入力">
+            </div>
+
+            <div class="input-group">
+                <label>人名・クリエイター名</label>
+                <input type="text" id="targetInput" placeholder="例: 蜷川幸雄">
+                <button id="generateBtn" class="btn-generate">✨ 名言 & キャプション生成</button>
+            </div>
+
+            <hr style="width:100%; border:none; border-top:1px solid #eee;">
+
+            <div class="input-group">
+                <label>タイトル (中央)</label>
+                <input type="text" id="categoryInput">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <label>サイズ: <span id="catSizeVal">60</span>px</label>
+                </div>
+                <input type="range" id="catSizeSlider" min="20" max="100" value="60">
+            </div>
+
+            <div class="input-group">
+                <label>名言 (中央)</label>
+                <textarea id="quoteInput" rows="3"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <label>サイズ: <span id="quoteSizeVal">60</span>px</label>
+                </div>
+                <input type="range" id="quoteSizeSlider" min="30" max="150" value="60">
+            </div>
+
+            <hr style="width:100%; border:none; border-top:1px solid #eee;">
+
+            <div class="input-group">
+                <label>投稿用キャプション</label>
+                <textarea id="bodyInput" rows="8"></textarea>
+                <button id="copyBtn" class="btn-copy">📋 キャプションをコピー</button>
+            </div>
+
+            <button id="downloadBtn" class="btn-download">📥 画像 & テキストを保存</button>
+        </div>
+
+        <div class="preview-pane">
+            <div id="insta-post">
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🎨</div>
+                    作成中...
+                </div>
+
+                <div class="post-header">
+                    <div class="category-title" id="displayCategory">タイトルの言葉</div>
+                </div>
+
+                <div class="content-area">
+                    <div class="main-quote" id="displayQuote">名言</div>
+                </div>
+
+                <!-- Mascot moved to bottom right -->
+                <div class="mascot-area" id="mascotPreview">
+                    <div class="placeholder-box">Mighty</div>
+                </div>
+
+                <div class="post-footer">
+                    <div class="school-name">舞台スタッフの学校</div>
+                </div>
+            </div>
+
+            <div class="caption-box">
+                <label style="display:block; margin-bottom:8px; font-weight:bold; font-size:12px; color:#888;">【インスタ・キャプション用】</label>
+                <div class="caption-text" id="captionPreview">ここに解説とハッシュタグが表示されます。</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://cdn.jsdelivr.net/npm/@google/generative-ai/+esm";
+
+        const els = {
+            apiKey: document.getElementById('apiKey'),
+            target: document.getElementById('targetInput'),
+            genBtn: document.getElementById('generateBtn'),
+            dlBtn: document.getElementById('downloadBtn'),
+            copyBtn: document.getElementById('copyBtn'),
+            loading: document.getElementById('loadingOverlay'),
+            catIn: document.getElementById('categoryInput'),
+            quoteIn: document.getElementById('quoteInput'),
+            bodyIn: document.getElementById('bodyInput'),
+            catDisp: document.getElementById('displayCategory'),
+            quoteDisp: document.getElementById('displayQuote'),
+            capDisp: document.getElementById('captionPreview'),
+            catSlider: document.getElementById('catSizeSlider'),
+            quoteSlider: document.getElementById('quoteSizeSlider'),
+            catSizeVal: document.getElementById('catSizeVal'),
+            quoteSizeVal: document.getElementById('quoteSizeVal'),
+            mascotPreview: document.getElementById('mascotPreview')
+        };
+
+        const syncUI = () => {
+            if (els.catDisp) {
+                els.catDisp.innerText = els.catIn.value;
+                els.catDisp.style.fontSize = els.catSlider.value + 'px';
+            }
+            if (els.quoteDisp) {
+                els.quoteDisp.innerText = els.quoteIn.value;
+                els.quoteDisp.style.fontSize = els.quoteSlider.value + 'px';
+            }
+            if (els.capDisp) els.capDisp.innerText = els.bodyIn.value;
+            if (els.catSizeVal) els.catSizeVal.innerText = els.catSlider.value;
+            if (els.quoteSizeVal) els.quoteSizeVal.innerText = els.quoteSlider.value;
+        };
+
+        [els.catIn, els.quoteIn, els.bodyIn, els.catSlider, els.quoteSlider].forEach(el => {
+            el.addEventListener('input', syncUI);
+        });
+
+        els.apiKey.value = localStorage.getItem('mighty_key') || '';
+
+        els.genBtn.addEventListener('click', async () => {
+            const key = els.apiKey.value;
+            const target = els.target.value;
+            if (!key || !target) return alert('API Keyと名前を入力してください');
+            
+            localStorage.setItem('mighty_key', key);
+            els.loading.style.display = 'flex';
+            
+            try {
+                const genAI = new GoogleGenerativeAI(key);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                
+                const prompt = `あなたは「マイティ」という名の20歳の若手スタッフです。${target}の名言を一つ選び、以下の条件でインスタ投稿案を作成してください。
+
+                【絶対条件】
+                1. 名言(quote): インパクトのある短い言葉。句読点（。、）は一切入れない。
+                2. 本文(body): 冒頭は必ず「おはようございます！マイティだよ。」から始めてください。
+                3. キャラクター設定: あなたは20歳で、まだ現場に入ったばかりの新米です。偉そうな「先輩」ではなく、高校生や同世代の仲間に対して「僕もまだ勉強中だけど、一緒に頑張ろう」という謙虚で優しく、穏やかな口調で語りかけてください。
+                4. 本文の内容: その名言を読んで、自分（新人のマイティ）がどう感じたか、どう励まされたかを140文字程度で等身大に伝えてください。
+                5. ハッシュタグ: #舞台スタッフの学校 #名言 #演劇 #舞台 を含み、関連ハッシュタグを計10個程度。
+                
+                JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n新人の僕が感じたことなどの解説文\n\nハッシュタグ"}`;
+                
+                const result = await model.generateContent(prompt);
+                const text = await result.response.text();
+                const json = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
+                
+                els.catIn.value = json.category;
+                els.quoteIn.value = json.quote;
+                els.bodyIn.value = json.body;
+                syncUI();
+            } catch (err) {
+                alert('エラー: ' + err.message);
+            } finally {
+                els.loading.style.display = 'none';
+            }
+        });
+
+        els.copyBtn.addEventListener('click', () => {
+            els.bodyIn.select();
+            document.execCommand('copy');
+            alert('コピー完了！');
+        });
+
+        els.dlBtn.addEventListener('click', () => {
+            const post = document.getElementById('insta-post');
+            html2canvas(post, {
+                scale: 1080 / 600,
+                useCORS: true,
+                width: 600,
+                height: 750
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `mighty_post_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            const blob = new Blob([els.bodyIn.value], {type: 'text/plain'});
+            const link = document.createElement('a');
+            link.download = `mighty_caption_${Date.now()}.txt`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+        });
+
+        syncUI();
+        
+        const loadDefaultMascot = () => {
+            const path = 'assets/mighty.png';
+            const img = new Image();
+            img.onload = () => els.mascotPreview.innerHTML = `<img src="${path}" />`;
+            img.src = path;
+        };
+        loadDefaultMascot();
+    </script>
+</body>
+</html>
