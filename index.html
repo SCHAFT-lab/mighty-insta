@@ -269,6 +269,9 @@
             mascotPreview: document.getElementById('mascotPreview')
         };
 
+        const generationCache = {};
+        const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
         const syncUI = () => {
             els.catDisp.innerText = els.catIn.value || 'タイトルの言葉';
             els.catDisp.style.fontSize = els.catSlider.value + 'px';
@@ -306,15 +309,49 @@
             input.addEventListener('input', (e) => els.targets.forEach(other => other.value = e.target.value));
         });
 
+        async function callGemini(genAI, modelName, prompt, retries = 2) {
+            let lastError;
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const model = genAI.getGenerativeModel({ model: modelName });
+                    const result = await model.generateContent(prompt);
+                    return await result.response.text();
+                } catch (err) {
+                    lastError = err;
+                    const isQuotaError = err.message.includes('429') || err.message.toLowerCase().includes('quota');
+                    if (isQuotaError && i < retries - 1) {
+                        const waitTime = Math.pow(2, i) * 2000 + Math.random() * 1000;
+                        console.warn(`Quota exceeded for ${modelName}. Retrying in ${Math.round(waitTime)}ms...`);
+                        await sleep(waitTime);
+                        continue;
+                    }
+                    throw err;
+                }
+            }
+            throw lastError;
+        }
+
         els.genBtns.forEach(btn => btn.addEventListener('click', async () => {
             const key = els.apiKeys[0].value;
-            const target = els.targets[0].value;
+            const target = els.targets[0].value.trim();
             if (!key || !target) return alert('API Keyと名前を入力してください');
+
+            // Cache check
+            if (generationCache[target]) {
+                const json = generationCache[target];
+                els.catIn.value = json.category;
+                els.quoteIn.value = json.quote;
+                els.bodyIn.value = json.body;
+                syncUI();
+                rescalePreview();
+                return;
+            }
+
             localStorage.setItem('mighty_key', key);
             els.loading.style.display = 'flex';
+            
             try {
                 const genAI = new GoogleGenerativeAI(key);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                 const prompt = `あなたは「マイティ」という名の20歳の若手スタッフです。${target}の名言を一つ選び、以下の条件でインスタ投稿案を作成してください。
 
                 【絶対条件】
@@ -326,8 +363,20 @@
                 6. フォーマット: 本文は20文字〜30文字ごとに改行を入れ、スマホ画面で見たときに読みやすいようにしてください。句読点（。、）を適切に入れてください。
                 
                 JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n（20-30文字で改行された本文）\n\n#ハッシュタグ1 #ハッシュタグ2 ..."}`;
-                const result = await model.generateContent(prompt);
-                const responseText = await result.response.text();
+
+                let responseText;
+                try {
+                    // Try 2.0-flash first
+                    responseText = await callGemini(genAI, "gemini-2.0-flash", prompt, 1);
+                } catch (err) {
+                    if (err.message.includes('429') || err.message.toLowerCase().includes('quota')) {
+                        console.info("Switching to gemini-1.5-flash due to quota limit on 2.0");
+                        responseText = await callGemini(genAI, "gemini-1.5-flash", prompt, 2);
+                    } else {
+                        throw err;
+                    }
+                }
+
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) throw new Error("JSON形式のレスポンスが見つかりませんでした");
                 const json = JSON.parse(jsonMatch[0]);
@@ -345,12 +394,26 @@
                     }).join('\n');
                 };
 
+                const processedBody = formatBody(json.body);
+                json.body = processedBody; // Update json for cache
+
                 els.catIn.value = json.category;
                 els.quoteIn.value = json.quote;
-                els.bodyIn.value = formatBody(json.body);
+                els.bodyIn.value = processedBody;
+                
+                // Save to cache
+                generationCache[target] = json;
+
                 syncUI();
                 rescalePreview();
-            } catch (err) { alert('エラー: ' + err.message); } finally { els.loading.style.display = 'none'; }
+            } catch (err) { 
+                let msg = 'エラーが発生しました';
+                if (err.message.includes('429')) msg = 'APIの利用制限に達しました。1分ほど待ってから再度お試しください。';
+                else msg = 'エラー: ' + err.message;
+                alert(msg); 
+            } finally { 
+                els.loading.style.display = 'none'; 
+            }
         }));
 
         els.copyBtn.addEventListener('click', () => { els.bodyIn.select(); document.execCommand('copy'); alert('コピー完了！'); });
