@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>マイティ・インスタ v2.8 (バグ修正版)</title>
+    <title>マイティ・インスタ v2.9 (クイック編集版)</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,7 +37,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 10px; /* Reduced for mobile */
+            padding: 10px;
             overflow-x: hidden;
         }
 
@@ -50,27 +50,10 @@
             align-items: flex-start;
         }
 
-        /* Responsive Layout */
         @media (max-width: 1000px) {
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-            .controls {
-                width: 100% !important;
-                max-width: 500px;
-                order: 2;
-                box-sizing: border-box;
-            }
-            .preview-pane {
-                width: 100% !important;
-                order: 1;
-                margin-bottom: 0;
-            }
-            #insta-post {
-                /* Fix: Better centering on scale */
-                margin: 0 auto;
-            }
+            .container { flex-direction: column; align-items: center; }
+            .controls { width: 100% !important; max-width: 500px; order: 2; box-sizing: border-box; }
+            .preview-pane { width: 100% !important; order: 1; }
         }
 
         .controls {
@@ -84,24 +67,37 @@
             gap: 12px;
         }
 
+        /* Quick Editor Box (Under Preview) */
+        .quick-editor {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
         .input-group { display: flex; flex-direction: column; gap: 4px; }
         label { font-size: 11px; font-weight: bold; color: #444; }
         input, textarea, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; -webkit-appearance: none; }
         button { padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
         .btn-generate { background-color: var(--accent-gold); color: white; }
         .btn-download { background-color: #333; color: white; font-size: 16px; }
-        .btn-copy { background-color: #eee; color: #333; font-size: 14px; margin-top: 5px; }
+        .btn-copy { background-color: #eee; color: #333; font-size: 14px; }
 
         .preview-pane {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             align-items: center;
             width: 600px;
-            overflow: visible;
         }
 
-        /* Post Wrapper for scaling */
         #post-scaler {
             width: 100%;
             display: flex;
@@ -183,31 +179,6 @@
 
         .school-name { font-size: 25px; font-weight: 900; opacity: 0.6; }
 
-        .caption-box {
-            width: 100%;
-            max-width: 600px;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-
-        .caption-text {
-            font-family: var(--font-mincho);
-            font-size: 15px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            color: #555;
-            max-height: 150px;
-            overflow-y: auto;
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
-
         .loading-overlay {
             position: absolute; inset: 0;
             background: rgba(255,255,255,0.9);
@@ -228,10 +199,10 @@
                 <div id="insta-post">
                     <div class="loading-overlay" id="loadingOverlay">
                         <div style="font-size: 30px; margin-bottom: 10px;">🎨</div>
-                        作成中...
+                        生成中...
                     </div>
                     <div class="post-header">
-                        <div class="category-title" id="displayCategory">タイトルの言葉</div>
+                        <div class="category-title" id="displayCategory">演出家の言葉</div>
                     </div>
                     <div class="content-area">
                         <div class="main-quote" id="displayQuote">名言</div>
@@ -245,15 +216,28 @@
                 </div>
             </div>
 
-            <div class="caption-box">
-                <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:12px; color:#888;">【インスタ・キャプション案】</label>
-                <div class="caption-text" id="captionPreview">ここに解説が表示されます</div>
+            <!-- Quick Adjustments Area -->
+            <div class="quick-editor">
+                <div style="display:flex; gap:10px;">
+                    <div class="input-group" style="flex:1;">
+                        <label>タイトルサイズ: <span id="catSizeVal">60</span>px</label>
+                        <input type="range" id="catSizeSlider" min="20" max="100" value="60">
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>名言サイズ: <span id="quoteSizeVal">60</span>px</label>
+                        <input type="range" id="quoteSizeSlider" min="30" max="150" value="60">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>名言の修正・改行</label>
+                    <textarea id="quoteInput" rows="2" placeholder="ここに名言を直接入力"></textarea>
+                </div>
             </div>
         </div>
 
-        <!-- Controls -->
+        <!-- Settings Area -->
         <div class="controls">
-            <h3 style="margin:0; color:var(--accent-gold);">Mighty Insta v2.8</h3>
+            <h3 style="margin:0; color:var(--accent-gold);">Mighty Insta v2.9</h3>
             
             <div class="input-group">
                 <label>Gemini API Key</label>
@@ -261,34 +245,21 @@
             </div>
 
             <div class="input-group">
-                <label>名前</label>
+                <label>人名・名前</label>
                 <input type="text" id="targetInput" placeholder="例: 蜷川幸雄">
-                <button id="generateBtn" class="btn-generate">✨ 名言 & キャプション生成</button>
+                <button id="generateBtn" class="btn-generate">✨ 新しい名言を生成</button>
             </div>
 
             <hr style="width:100%; border:none; border-top:1px solid #eee;">
 
             <div class="input-group">
-                <label>タイトルサイズ: <span id="catSizeVal">60</span>px</label>
-                <input type="range" id="catSizeSlider" min="20" max="100" value="60">
-            </div>
-
-            <div class="input-group">
-                <label>名言サイズ: <span id="quoteSizeVal">60</span>px</label>
-                <input type="range" id="quoteSizeSlider" min="30" max="150" value="60">
-            </div>
-
-            <hr style="width:100%; border:none; border-top:1px solid #eee;">
-
-            <div class="input-group">
-                <label>キャプション確認</label>
+                <label>投稿用キャプション案</label>
                 <textarea id="bodyInput" rows="6" style="font-size:14px;"></textarea>
                 <button id="copyBtn" class="btn-copy">📋 キャプションをコピー</button>
             </div>
 
             <button id="downloadBtn" class="btn-download">📥 画像を保存する</button>
             <input type="hidden" id="categoryInput">
-            <textarea id="quoteInput" style="display:none"></textarea>
         </div>
     </div>
 
@@ -307,7 +278,6 @@
             bodyIn: document.getElementById('bodyInput'),
             catDisp: document.getElementById('displayCategory'),
             quoteDisp: document.getElementById('displayQuote'),
-            capDisp: document.getElementById('captionPreview'),
             catSlider: document.getElementById('catSizeSlider'),
             quoteSlider: document.getElementById('quoteSizeSlider'),
             catSizeVal: document.getElementById('catSizeVal'),
@@ -324,7 +294,6 @@
                 els.quoteDisp.innerText = els.quoteIn.value || '名言';
                 els.quoteDisp.style.fontSize = els.quoteSlider.value + 'px';
             }
-            if (els.capDisp) els.capDisp.innerText = els.bodyIn.value;
             els.catSizeVal.innerText = els.catSlider.value;
             els.quoteSizeVal.innerText = els.quoteSlider.value;
         };
@@ -338,7 +307,6 @@
             if (availableWidth < originalWidth) {
                 const scale = availableWidth / originalWidth;
                 post.style.transform = `scale(${scale})`;
-                // Fix: Properly update parent height to avoid overlap
                 container.style.height = (750 * scale) + 'px';
             } else {
                 post.style.transform = 'none';
@@ -349,7 +317,7 @@
         window.addEventListener('resize', rescalePreview);
         window.addEventListener('load', rescalePreview);
 
-        [els.catSlider, els.quoteSlider, els.bodyIn].forEach(el => {
+        [els.catSlider, els.quoteSlider, els.quoteIn].forEach(el => {
             el.addEventListener('input', syncUI);
         });
 
@@ -371,7 +339,7 @@
                 【絶対条件】
                 1. 名言(quote): インパクトのある短い言葉。句読点（。、）は一切入れない。
                 2. 本文(body): 冒頭は必ず「おはようございます！マイティだよ。」から始める。
-                3. キャラクター: 20歳の新米。謙虚で穏やか。読者と同世代目線。
+                3. キャラクター: 20歳の新米。謙虚で穏やか。
                 4. ハッシュタグ: #舞台スタッフの学校 #名言 #演劇 #舞台 を含む計10個。
                 JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n解説文\n\nハッシュタグ"}`;
                 
@@ -401,7 +369,6 @@
             const post = document.getElementById('insta-post');
             const oldTransform = post.style.transform;
             post.style.transform = 'none';
-            
             html2canvas(post, {
                 scale: 1080 / 600,
                 useCORS: true,
@@ -414,7 +381,6 @@
                 link.click();
                 post.style.transform = oldTransform;
             });
-            // Removed automatic txt download to prevent new window bug on mobile
         });
 
         const loadDefaultMascot = () => {
