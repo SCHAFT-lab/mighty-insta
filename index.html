@@ -322,14 +322,28 @@
                 2. 本文(body): 冒頭は必ず「おはようございます！マイティだよ。」から始めてください。
                 3. キャラクター設定: あなたは20歳で、まだ現場に入ったばかりの新米です。偉そうな「先輩」ではなく、高校生や同世代の仲間に対して「僕もまだ勉強中だけど、一緒に頑張ろう」という謙虚で優しく、穏やかな口調で語りかけてください。
                 4. 本文の内容: その名言を読んで、自分（新人のマイティ）がどう感じたか、どう励まされたかを140文字程度で等身大に伝えてください。
-                5. ハッシュタグ: #舞台スタッフの学校 #名言 #演劇 #舞台 を含み、関連ハッシュタグを計10個程度。
+                5. ハッシュタグ: #舞台スタッフの学校 #名言 #演劇 #舞台 を含み、ハッシュタグは合計で5つまでにしてください。
+                6. フォーマット: 本文は20文字〜30文字ごとに改行を入れ、スマホ画面で見たときに読みやすいようにしてください。句読点（。、）を適切に入れてください。
                 
-                JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n新人の僕が感じたことなどの解説文\n\nハッシュタグ"}`;
+                JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n（20-30文字で改行された本文）\n\n#ハッシュタグ1 #ハッシュタグ2 ..."}`;
                 const result = await model.generateContent(prompt);
                 const json = JSON.parse((await result.response.text()).match(/\{[\s\S]*\}/)[0]);
+                
+                // Final check formatting if Gemini didn't follow perfectly
+                const formatBody = (text) => {
+                    return text.split('\n').map(line => {
+                        if (line.startsWith('#')) return line; // Don't wrap hashtags
+                        let res = '';
+                        for (let i = 0; i < line.length; i += 25) {
+                            res += line.substring(i, i + 25) + (line.length > i + 25 ? '\n' : '');
+                        }
+                        return res;
+                    }).join('\n');
+                };
+
                 els.catIn.value = json.category;
                 els.quoteIn.value = json.quote;
-                els.bodyIn.value = json.body;
+                els.bodyIn.value = formatBody(json.body);
                 syncUI();
                 rescalePreview();
             } catch (err) { alert('エラー: ' + err.message); } finally { els.loading.style.display = 'none'; }
