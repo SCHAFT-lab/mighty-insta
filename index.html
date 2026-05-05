@@ -307,14 +307,15 @@
         });
 
         els.genBtns.forEach(btn => btn.addEventListener('click', async () => {
-            const key = els.apiKeys[0].value;
-            const target = els.targets[0].value;
+            const key = els.apiKeys[0].value.trim();
+            const target = els.targets[0].value.trim();
             if (!key || !target) return alert('API Keyと名前を入力してください');
+            
             localStorage.setItem('mighty_key', key);
             els.loading.style.display = 'flex';
+            
             try {
                 const genAI = new GoogleGenerativeAI(key);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                 const prompt = `あなたは「マイティ」という名の20歳の若手スタッフです。${target}の名言を一つ選び、以下の条件でインスタ投稿案を作成してください。
 
                 【絶対条件】
@@ -326,8 +327,31 @@
                 6. フォーマット: 本文は20文字〜30文字ごとに改行を入れ、スマホ画面で見たときに読みやすいようにしてください。句読点（。、）を適切に入れてください。
                 
                 JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n（20-30文字で改行された本文）\n\n#ハッシュタグ1 #ハッシュタグ2 ..."}`;
-                const result = await model.generateContent(prompt);
-                const responseText = await result.response.text();
+
+                // Try multiple models in order of preference
+                const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+                let lastError = null;
+                let responseText = null;
+
+                for (const modelName of models) {
+                    try {
+                        console.log(`Trying model: ${modelName}...`);
+                        const model = genAI.getGenerativeModel({ model: modelName });
+                        const result = await model.generateContent(prompt);
+                        responseText = await result.response.text();
+                        if (responseText) {
+                            console.log(`Success with model: ${modelName}`);
+                            break; 
+                        }
+                    } catch (err) {
+                        console.warn(`Model ${modelName} failed:`, err.message);
+                        lastError = err;
+                        // Continue to next model
+                    }
+                }
+
+                if (!responseText) throw lastError || new Error("どのモデルでも生成できませんでした。APIキーの設定を確認してください。");
+
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) throw new Error("JSON形式のレスポンスが見つかりませんでした");
                 const json = JSON.parse(jsonMatch[0]);
@@ -350,7 +374,12 @@
                 els.bodyIn.value = formatBody(json.body);
                 syncUI();
                 rescalePreview();
-            } catch (err) { alert('エラー: ' + err.message); } finally { els.loading.style.display = 'none'; }
+            } catch (err) { 
+                console.error(err);
+                alert('エラー: ' + err.message + '\n\n新しいAPIキーを貼り付けたか、ブラウザをリロードしたか確認してください。'); 
+            } finally { 
+                els.loading.style.display = 'none'; 
+            }
         }));
 
         els.copyBtn.addEventListener('click', () => { els.bodyIn.select(); document.execCommand('copy'); alert('コピー完了！'); });
