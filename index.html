@@ -314,7 +314,7 @@
             els.loading.style.display = 'flex';
             try {
                 const genAI = new GoogleGenerativeAI(key);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 const prompt = `あなたは「マイティ」という名の20歳の若手スタッフです。${target}の名言を一つ選び、以下の条件でインスタ投稿案を作成してください。
 
                 【絶対条件】
