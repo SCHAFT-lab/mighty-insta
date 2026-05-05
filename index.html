@@ -328,8 +328,8 @@
                 
                 JSON: {"category":"${target}の言葉","quote":"名言","body":"おはようございます！マイティだよ。\n\n（20-30文字で改行された本文）\n\n#ハッシュタグ1 #ハッシュタグ2 ..."}`;
 
-                // Try multiple models in order of preference
-                const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+                // Try multiple models in order of preference (Updated based on diagnostic results)
+                const models = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
                 let lastError = null;
                 let responseText = null;
 
